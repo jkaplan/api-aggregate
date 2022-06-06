@@ -105,15 +105,6 @@ class StreamerService
         $this->header($this->format);
         $output = $this->$function($this->data);
 
-        // Prepare a JSONP callback.
-        $callback = $this->jsonp_callback_filter($this->callback);
-
-        // Only send back JSONP if that's appropriate for the request.
-        if ($this->format == 'json' && $this->callback) {
-            return "{$this->callback}($output);";
-        }
-
-        // If not JSONP, send back the data.
         return $output;
     }
 
