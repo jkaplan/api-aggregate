@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
-use App\Services\StreamerService;
+use App\Services\ConvertCsvToApiService;
 use App\Http\Controllers\Controller;
 
 class StreamerController extends Controller
@@ -26,7 +26,7 @@ class StreamerController extends Controller
     public function index(Request $request)
     {
         # Create a new instance of the Instant API class.
-        $api = new StreamerService();
+        $api = new ConvertCsvToApiService();
 
         # Intercept the requested URL and use the parameters within it to determine what data to respond with.
         $api->parse_query();

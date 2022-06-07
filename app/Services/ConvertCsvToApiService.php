@@ -6,7 +6,7 @@ use stdClass;
 use DOMDocument;
 use SimpleXMLElement;
 
-class StreamerService
+class ConvertCsvToApiService
 {
     public $ttl = 3600;
     public $source = null;
