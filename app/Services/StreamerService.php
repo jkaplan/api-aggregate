@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use stdClass;
+use DOMDocument;
+use SimpleXMLElement;
 
 class StreamerService
 {
@@ -401,7 +403,6 @@ class StreamerService
 
         // Fill in any defaults that are missing.
         $query = $this->default_vars($this->get_query_vars($data), $query);
-
         // Eliminate any value in $query that equal false.
         $query = array_filter($query);
 
@@ -415,7 +416,6 @@ class StreamerService
         if ($this->sort != null) {
             usort($data, array( &$this, 'object_sort' ));
         }
-
         return $data;
     }
 
@@ -1347,15 +1347,16 @@ class StreamerService
             $to_match = (array) $obj;
 
             $matched = 0;
+
             foreach ($args as $m_key => $m_value) {
-                if (array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) {
+                if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
                     $matched++;
                 }
             }
 
             if (('AND' == $operator && $matched == $count)
-        || ('OR' == $operator && $matched > 0)
-        || ('NOT' == $operator && 0 == $matched)) {
+                || ('OR' == $operator && $matched > 0)
+                || ('NOT' == $operator && 0 == $matched)) {
                 $filtered[$key] = $obj;
             }
         }
