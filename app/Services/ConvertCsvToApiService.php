@@ -155,6 +155,9 @@ class ConvertCsvToApiService
     {
         $string = str_replace("\r\n", "\n", $string);
         $string = str_replace("\r", "\n", $string);
+        $string = str_replace("\n\n", "", $string);
+        $string = rtrim($string, "\n");
+
         return $string;
     }
 
@@ -166,8 +169,8 @@ class ConvertCsvToApiService
         $csv = $this->normalize_line_endings($csv);
 
         $lines = explode("\n", $csv);
-        $lines = $this->parse_lines($lines);
 
+        $lines = $this->parse_lines($lines);
         // If no header row exists, automatically create field names.
         if ($this->header_row == 'n') {
             for ($i=0; $i<count($lines[0]); $i++) {
