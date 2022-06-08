@@ -20,5 +20,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('api')->group(function () {
-    Route::get('/streamer', [StreamerController::class, 'index'])->name('api.streamer.show');
+    Route::get('/netflix', [StreamerController::class, 'netflix'])->name('api.netflix.show');
 });
