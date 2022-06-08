@@ -5,6 +5,7 @@ namespace App\Services;
 use stdClass;
 use DOMDocument;
 use SimpleXMLElement;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -1348,10 +1349,17 @@ class ConvertCsvToApiService
         return $filtered;
     }
 
-    public function paginate($items, $perPage = 15, $page = null, $options = [])
+    public function paginate($items, $perPage = 5, $page = null, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
+
+        $querystring = $_SERVER['QUERY_STRING'];
+        $querystring = str_replace('&page='.$page, '', $querystring);
+
+        $options = [
+            'path' => Paginator::resolveCurrentPath() ."?". $querystring,
+        ];
 
         return new LengthAwarePaginator(array_values($items->forPage($page, $perPage)->toArray()), $items->count(), $perPage, $page, $options);
     }
