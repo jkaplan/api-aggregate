@@ -47,6 +47,30 @@ class StreamerController extends Controller
         return $this->index($request, $csv_name);
     }
 
+    public function hulu(Request $request)
+    {
+        $csv_name = $this->getCsvNameFromPath($request);
+
+        // set query string, pass into index, then pass that into parseQuery of index function
+        return $this->index($request, $csv_name);
+    }
+
+    public function disney(Request $request)
+    {
+        $csv_name = $this->getCsvNameFromPath($request);
+
+        // set query string, pass into index, then pass that into parseQuery of index function
+        return $this->index($request, $csv_name);
+    }
+
+    public function amazon(Request $request)
+    {
+        $csv_name = $this->getCsvNameFromPath($request);
+
+        // set query string, pass into index, then pass that into parseQuery of index function
+        return $this->index($request, $csv_name);
+    }
+
     public function getCsvNameFromPath($request)
     {
         return str_replace('/api/', '', $request->getPathInfo());
