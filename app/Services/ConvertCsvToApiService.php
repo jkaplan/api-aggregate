@@ -5,6 +5,9 @@ namespace App\Services;
 use stdClass;
 use DOMDocument;
 use SimpleXMLElement;
+use Illuminate\Support\Collection;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ConvertCsvToApiService
 {
@@ -81,11 +84,13 @@ class ConvertCsvToApiService
             // Turn the raw file data (e.g. CSV) into a PHP array.
             $this->data = $this->$parser($this->data);
 
+
             // Save the data to WordPress' cache via its Transients API.
             $this->set_cache($key, $this->data, $this->ttl);
         }
 
         $this->data = $this->query($this->data);
+        $this->data = $this->paginate($this->data);
 
         return $this->data;
     }
@@ -1341,5 +1346,13 @@ class ConvertCsvToApiService
         }
 
         return $filtered;
+    }
+
+    public function paginate($items, $perPage = 15, $page = null, $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+
+        return new LengthAwarePaginator(array_values($items->forPage($page, $perPage)->toArray()), $items->count(), $perPage, $page, $options);
     }
 }
