@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\StreamerController;
+use App\Http\Controllers\Api\ApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,8 +20,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('api')->group(function () {
-    Route::get('/netflix_titles', [StreamerController::class, 'netflix'])->name('api.netflix.show');
-    Route::get('/hulu_titles', [StreamerController::class, 'hulu'])->name('api.hulu.show');
-    Route::get('/disney_plus_titles', [StreamerController::class, 'amazon'])->name('api.amazon.show');
-    Route::get('/amazon_prime_titles', [StreamerController::class, 'disney'])->name('api.disney.show');
+    Route::get('/{service}', [ApiController::class, 'index']);
 });
