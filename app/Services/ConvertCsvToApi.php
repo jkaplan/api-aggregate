@@ -43,7 +43,6 @@ class ConvertCsvToApi
         $this->source = 'http://api-aggregate.localhost/csvs/' . $csv_name . '.csv';
         $this->source_format = isset($query['source_format']) ? $query['source_format'] : $this->get_extension($this->source);
         $this->format = isset($query['format']) ? $query['format'] : 'json';
-        $this->callback = isset($query['callback']) ? $this->jsonp_callback_filter($query['callback']) : false;
         $this->sort = isset($query['sort']) ? $query['sort'] : null;
         $this->sort_dir = isset($query['sort_dir']) ? $query['sort_dir'] : "desc";
         $this->header_row = isset($query['header_row']) ? $query['header_row'] : "y";
