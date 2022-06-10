@@ -8,9 +8,11 @@ use SimpleXMLElement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
+use App\Services\GenerateDocumentation;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class ConvertCsvToApiService
+class ConvertCsvToApi
 {
     public $ttl = 3600;
     public $source = null;
@@ -20,6 +22,17 @@ class ConvertCsvToApiService
     public $sort = null;
     public $sort_dir = null;
     public $data;
+    public $request;
+
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
 
     /**
      * Use the query (often the requested URL) to define some settings.
@@ -41,7 +54,6 @@ class ConvertCsvToApiService
         $this->source = 'http://api-aggregate.localhost/csvs/' . $csv_name . '.csv';
         $this->source_format = isset($query['source_format']) ? $query['source_format'] : $this->get_extension($this->source);
         $this->format = isset($query['format']) ? $query['format'] : 'json';
-        $this->callback = isset($query['callback']) ? $this->jsonp_callback_filter($query['callback']) : false;
         $this->sort = isset($query['sort']) ? $query['sort'] : null;
         $this->sort_dir = isset($query['sort_dir']) ? $query['sort_dir'] : "desc";
         $this->header_row = isset($query['header_row']) ? $query['header_row'] : "y";
@@ -68,7 +80,7 @@ class ConvertCsvToApiService
         $key = 'csv_to_api_' . md5($this->source);
         $this->data = $this->get_cache($key);
 
-        if (!$this->data) {
+        if (!Cache::has($key)) {
 
       // Retrieve the requested source material via HTTP GET.
             if (ini_get('allow_url_fopen') == true) {
@@ -85,13 +97,12 @@ class ConvertCsvToApiService
             // Turn the raw file data (e.g. CSV) into a PHP array.
             $this->data = $this->$parser($this->data);
 
-
-            // Save the data to WordPress' cache via its Transients API.
-            $this->set_cache($key, $this->data, $this->ttl);
+            Cache::store('file')->put($key, $this->data, $this->ttl);
         }
 
         $this->data = $this->query($this->data);
         $this->data = $this->paginate($this->data);
+
 
         return $this->data;
     }
@@ -124,6 +135,7 @@ class ConvertCsvToApiService
     {
         $key = $this->sanitize_title($key);
         $key = str_replace('-', '_', $key);
+
         return $key;
     }
 
@@ -143,14 +155,6 @@ class ConvertCsvToApiService
         return isset($url_parts['extension']) ? $url_parts['extension'] : '';
     }
 
-
-    /**
-     * Convert reserved XML characters into their entitity equivalents.
-     */
-    public function xml_entities($string)
-    {
-        return str_replace(array("&", "<", ">", "\"", "'"), array("&amp;", "&lt;", "&gt;", "&quot;", "&apos;"), $string);
-    }
 
     /**
      * Normalize all line endings to Unix line endings
@@ -263,52 +267,6 @@ class ConvertCsvToApiService
 
 
     /**
-     * Turn a PHP object into XML text.
-     */
-    public function object_to_xml($array, $xml = null, $tidy = true)
-    {
-        if ($xml == null) {
-            $xml = new SimpleXMLElement('<records></records>');
-        }
-
-        // Array of keys that will be treated as attributes, not children.
-        $attributes = array( 'id' );
-
-        // Recursively loop through each item.
-        foreach ($array as $key => $value) {
-
-      // If this is a numbered array, grab the parent node to determine the node name.
-            if (is_numeric($key)) {
-                $key = 'record';
-            }
-
-            // If this is an attribute, treat as an attribute.
-            if (in_array($key, $attributes)) {
-                $xml->addAttribute($key, $value);
-            }
-
-            // If this value is an object or array, add a child node and treat recursively.
-            elseif (is_object($value) || is_array($value)) {
-                $child = $xml->addChild($key);
-                $child = $this->object_to_xml($value, $child, false);
-            }
-
-            // Simple key/value child pair.
-            else {
-                $value = $this->xml_entities($value);
-                $xml->addChild($key, $value);
-            }
-        }
-
-        if ($tidy) {
-            $xml = $this->tidy_xml($xml);
-        }
-
-        return $xml;
-    }
-
-
-    /**
      * Turn a PHP object into an HTML table.
      */
     public function object_to_html($data)
@@ -337,20 +295,6 @@ class ConvertCsvToApiService
         return $output;
     }
 
-
-    /**
-     * Pass XML through PHP's DOMDocument class, which will tidy it up.
-     */
-    public function tidy_xml($xml)
-    {
-        $dom = new DOMDocument();
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = true;
-        $dom->loadXML($xml->asXML());
-        return $dom->saveXML();
-    }
-
-
     /**
      * Send to the browser the MIME type that defines this content (JSON, XML, or HTML).
      */
@@ -377,25 +321,10 @@ class ConvertCsvToApiService
     public function get_mimes()
     {
         return array(
-      'json' => 'application/json',
-      'xml' => 'text/xml',
-      'htm|html' => 'text/html',
-    );
-    }
-
-
-    /**
-     * Prevent malicious callbacks from being used in JSONP requests.
-     */
-    public function jsonp_callback_filter($callback)
-    {
-
-    // As per <http://stackoverflow.com/a/10900911/1082542>.
-        if (preg_match('/[^0-9a-zA-Z\$_]|^(abstract|boolean|break|byte|case|catch|char|class|const|continue|debugger|default|delete|do|double|else|enum|export|extends|false|final|finally|float|for|function|goto|if|implements|import|in|instanceof|int|interface|long|native|new|null|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|true|try|typeof|var|volatile|void|while|with|NaN|Infinity|undefined)$/', $callback)) {
-            return false;
-        }
-
-        return $callback;
+        'json' => 'application/json',
+        'xml' => 'text/xml',
+        'htm|html' => 'text/html',
+        );
     }
 
 
@@ -494,33 +423,9 @@ class ConvertCsvToApiService
      */
     public function get_cache($key)
     {
-        if (!extension_loaded('apc') || (ini_get('apc.enabled') != 1)) {
-            if (isset($this->cache[ $key ])) {
-                return $this->cache[ $key ];
-            }
-        } else {
-            return apc_fetch($key);
-        }
-
-        return false;
+        return Cache::get($key);
     }
 
-
-    /**
-     * Store data in Alternative PHP Cache (APC).
-     */
-    public function set_cache($key, $value, $ttl = null)
-    {
-        if ($ttl == null) {
-            $ttl = $this->ttl;
-        }
-
-        if (extension_loaded('apc') && (ini_get('apc.enabled') == 1)) {
-            return apc_store($key, $value, $ttl);
-        }
-
-        $this->cache[$key] = $value;
-    }
 
     public function curl_get($url)
     {
@@ -1328,16 +1233,28 @@ class ConvertCsvToApiService
         $count = count($args);
         $filtered = array();
 
+        $strict_fields = $this->request->get('strict');
+
         foreach ($list as $key => $obj) {
             $to_match = (array) $obj;
 
             $matched = 0;
 
             foreach ($args as $m_key => $m_value) {
-                if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
-                    $matched++;
+                if (!str_contains($strict_fields, $m_key)) {
+                    if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
+                        $matched++;
+                    }
+                }
+
+                if (str_contains($strict_fields, $m_key)) {
+                    if (array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) {
+                        $matched++;
+                    }
                 }
             }
+
+
 
             if (('AND' == $operator && $matched == $count)
                 || ('OR' == $operator && $matched > 0)
