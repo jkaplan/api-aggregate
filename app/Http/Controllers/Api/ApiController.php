@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Route;
 use App\Services\ConvertCsvToApi;
-use App\Services\GenerateDocumentation;
 
 class ApiController extends Controller
 {
@@ -27,7 +25,7 @@ class ApiController extends Controller
      */
     public function index(Request $request)
     {
-        $api = new ConvertCsvToApi();
+        $api = new ConvertCsvToApi($request);
 
         $api->parse_query($request->query(), str_replace('/api/', '', $request->getPathInfo()));
 

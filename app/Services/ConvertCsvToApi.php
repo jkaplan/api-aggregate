@@ -22,6 +22,17 @@ class ConvertCsvToApi
     public $sort = null;
     public $sort_dir = null;
     public $data;
+    public $request;
+
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
 
     /**
      * Use the query (often the requested URL) to define some settings.
@@ -1222,16 +1233,28 @@ class ConvertCsvToApi
         $count = count($args);
         $filtered = array();
 
+        $strict_fields = $this->request->get('strict');
+
         foreach ($list as $key => $obj) {
             $to_match = (array) $obj;
 
             $matched = 0;
 
             foreach ($args as $m_key => $m_value) {
-                if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
-                    $matched++;
+                if (!str_contains($strict_fields, $m_key)) {
+                    if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
+                        $matched++;
+                    }
+                }
+
+                if (str_contains($strict_fields, $m_key)) {
+                    if (array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) {
+                        $matched++;
+                    }
                 }
             }
+
+
 
             if (('AND' == $operator && $matched == $count)
                 || ('OR' == $operator && $matched > 0)
