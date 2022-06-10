@@ -77,7 +77,7 @@ class ConvertCsvToApi
         }
 
         // Attempt to retrieve the data from cache
-        $key = 'csv_to_api_' . md5($this->source);
+        $key = 'csv_to_api_' . md5($this->source) . '_' . implode(",", $this->request->query());
         $this->data = $this->get_cache($key);
 
         if (!Cache::has($key)) {
@@ -97,12 +97,11 @@ class ConvertCsvToApi
             // Turn the raw file data (e.g. CSV) into a PHP array.
             $this->data = $this->$parser($this->data);
 
+            $this->data = $this->query($this->data);
+            $this->data = $this->paginate($this->data);
+
             Cache::store('file')->put($key, $this->data, $this->ttl);
         }
-
-        $this->data = $this->query($this->data);
-        $this->data = $this->paginate($this->data);
-
 
         return $this->data;
     }
