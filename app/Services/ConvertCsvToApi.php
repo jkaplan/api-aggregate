@@ -256,9 +256,6 @@ class ConvertCsvToApi
     }
 
 
-
-
-
     /**
      * Turn a PHP object into an HTML table.
      */
@@ -419,22 +416,6 @@ class ConvertCsvToApi
         return Cache::get($key);
     }
 
-
-    /**
-     * Store data in Alternative PHP Cache (APC).
-     */
-    public function set_cache($key, $value, $ttl = null)
-    {
-        // if ($ttl == null) {
-        //     $ttl = $this->ttl;
-        // }
-
-        // if (extension_loaded('apc') && (ini_get('apc.enabled') == 1)) {
-        //     return apc_store($key, $value, $ttl);
-        // }
-
-        // $this->cache[$key] = $value;
-    }
 
     public function curl_get($url)
     {
