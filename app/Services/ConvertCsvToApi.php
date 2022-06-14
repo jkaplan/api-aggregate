@@ -77,32 +77,31 @@ class ConvertCsvToApi
         }
 
         // Attempt to retrieve the data from cache
-        $key = 'csv_to_api_' . md5($this->source);
+        $key = 'csv_to_api_' . md5($this->source) . '_' . implode(",", $this->request->query());
         $this->data = $this->get_cache($key);
 
-        if (!Cache::has($key)) {
+        // if (!Cache::has($key)) {
 
-      // Retrieve the requested source material via HTTP GET.
-            if (ini_get('allow_url_fopen') == true) {
-                $this->data = file_get_contents($this->source);
-            } else {
-                $this->data = $this->curl_get($this->source);
-            }
-
-            if (!$this->data) {
-                header('502 Bad Gateway');
-                die('Bad data source');
-            }
-
-            // Turn the raw file data (e.g. CSV) into a PHP array.
-            $this->data = $this->$parser($this->data);
-
-            Cache::store('file')->put($key, $this->data, $this->ttl);
+        // Retrieve the requested source material via HTTP GET.
+        if (ini_get('allow_url_fopen') == true) {
+            $this->data = file_get_contents($this->source);
+        } else {
+            $this->data = $this->curl_get($this->source);
         }
+
+        if (!$this->data) {
+            header('502 Bad Gateway');
+            die('Bad data source');
+        }
+
+        // Turn the raw file data (e.g. CSV) into a PHP array.
+        $this->data = $this->$parser($this->data);
 
         $this->data = $this->query($this->data);
         $this->data = $this->paginate($this->data);
 
+        Cache::store('file')->put($key, $this->data, $this->ttl);
+        // }
 
         return $this->data;
     }

@@ -1,0 +1,155 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI Specification for Netflix
+  description: Example description
+  version: "1.0"
+externalDocs:
+  description: More information about Netflix API
+  url: https://apiaggregate.com/documentation/netflix
+servers:
+- url: //apiaggregate.com/api
+paths:
+  /netflix:
+    get:
+      tags:
+      - netflix
+      summary: Get all Netflix titles
+      parameters:
+      - name: show_id
+        in: query
+        description: Filter by show_id
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: Get records by content type
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - TV Show
+            - Movie
+      - name: title
+        in: query
+        description: Filter by title
+        schema:
+          type: string
+      - name: director
+        in: query
+        description: Filter by director
+        schema:
+          type: string
+      - name: cast
+        in: query
+        description: Filter by actor
+        schema:
+          type: string
+      - name: country
+        in: query
+        description: Filter by country origin
+        schema:
+          type: string
+      - name: release_year
+        in: query
+        description: Filter by release year
+        schema:
+          type: string
+      - name: rating
+        in: query
+        description: Get records by rating, pipe delimited
+        style: pipeDelimited
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - TV-Y
+            - TV-Y7
+            - TV-G
+            - TV-PG
+            - TV-14
+            - TV-MA
+            - G
+            - PG
+            - PG-13
+            - R
+      - name: listed_in
+        in: query
+        description: Get records by genre, pipe delimited
+        style: pipeDelimited
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Action & Adventure
+            - Anime Features
+            - Anime Series
+            - British TV Shows
+            - Children & Family Movies
+            - Classic & Cult TV
+            - Classic Movies
+            - Comedies
+            - Crime TV Shows
+            - Cult Movies
+            - Documentaries
+            - Docuseries
+            - Dramas
+            - Faith & Spirituality
+            - Horror Movies
+            - Independent Movies
+            - International Movies
+            - International TV Shows
+            - Kids' TV
+            - Korean TV Shows
+            - LGBTQ Movies
+            - Movies
+            - Music & Musicals
+            - Reality TV
+            - Romantic Movies
+            - Romantic TV Shows
+            - Sci-Fi & Fantasy
+            - Science & Nature TV
+            - Spanish-Language TV Shows
+            - Sports Movies
+            - Stand-Up Comedy
+            - Stand-Up Comedy & Talk Shows
+            - TV Action & Adventure
+            - TV Comedies
+            - TV Dramas
+            - TV Horror
+            - TV Mysteries
+            - TV Sci-Fi & Fantasy
+            - TV Shows
+            - TV Thrillers
+            - Teen TV Shows
+            - Thrillers
+      - name: strict
+        in: query
+        description: Allows strict filtering by adding a `strict` field as the parameter
+          value, pipe delimited
+        style: pipeDelimited
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - type
+            - title
+            - director
+            - cast
+            - country
+            - release_year
+            - rating
+            - listed_in
+      responses:
+        200:
+          description: Success
+          content: {}
+components: {}
