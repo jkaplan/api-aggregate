@@ -44,13 +44,21 @@ class GenerateDocumentation extends Command
         $headers = $this->getCsvHeaders($data);
 
         $responses = $this->promptForDataTypes($headers);
+        $strict_params = $this->promptForStrictParams($headers);
 
         $unique_values = $this->getUniqueValuesForArrayParams($responses, $data);
-        $params = $this->buildParamsArray($unique_values);
+        $params = $this->buildParamsArray($unique_values, $strict_params);
 
         $this->generateDocumentation($params);
 
         return 0;
+    }
+
+    public function promptForStrictParams($headers)
+    {
+        $strict_fields = $this->choice('Which params should allow strict filtering? '. PHP_EOL .' For example, querying `TV` with a strict filter would not return records with a value of `TV Shows`.', $headers, null, null, true);
+
+        return $strict_fields;
     }
 
     public function promptForDataTypes($headers)
@@ -58,8 +66,6 @@ class GenerateDocumentation extends Command
         $responses = [];
 
         foreach ($headers as $key => $value) {
-            // $responses[$value] = $this->ask('What data type is this parameter? (leave blank to input a string or `n` to leave that field out of the documentation)', $value);
-
             $responses[$value] = $this->choice('What data type is this parameter ('.$value.')? '.PHP_EOL.' a: array '.PHP_EOL.' i: integer '.PHP_EOL.' s: string '.PHP_EOL.' n: leave field off docs', ['a', 'i', 's', 'n']);
 
             if ($responses[$value] == 'a') {
@@ -74,7 +80,6 @@ class GenerateDocumentation extends Command
             if ($responses[$value] == 's') {
                 $responses[$value] = 'string';
             }
-
 
             if ($responses[$value] == 'array') {
                 $should_explode = $this->ask('Is this a comma separated list that needs to be exploded into individual options?', 'y or n');
@@ -142,13 +147,16 @@ class GenerateDocumentation extends Command
         return $unique_values;
     }
 
-    public function buildParamsArray($unique_values)
+    public function buildParamsArray($unique_values, $strict_fields)
     {
         $params = [];
+        $unique_values = array_merge($unique_values, ['strict_fields' => $strict_fields]);
 
         foreach ($unique_values as $key => $value) {
-            if (is_object($value)) {
-                $value = array_values($value->toArray());
+            if (is_object($value) || is_array($value)) {
+                if (is_object($value)) {
+                    $value = array_values($value->toArray());
+                }
 
                 array_push($params, [
                     'name' => $key,
