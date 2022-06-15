@@ -109,12 +109,15 @@ class GenerateDocumentation extends Command
 
     public function getCsvHeaders($data)
     {
-        $first_row = $data[0];
         $headers = [];
 
-        foreach ($first_row as $key => $value) {
-            array_push($headers, $key);
+        foreach ($data as $key => $value) {
+            foreach ($value as $k => $v) {
+                array_push($headers, $k);
+            }
         }
+
+        $headers = collect($headers)->unique()->toArray();
 
         return $headers;
     }
