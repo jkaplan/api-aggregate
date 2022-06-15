@@ -33,7 +33,6 @@ class GenerateDocumentation extends Command
         parent::__construct();
     }
 
-
     /**
      * Execute the console command.
      *
@@ -43,17 +42,42 @@ class GenerateDocumentation extends Command
     {
         $data = $this->getCsvData();
         $headers = $this->getCsvHeaders($data);
+
+        $responses = $this->promptForDataTypes($headers);
+
+        $unique_values = $this->getUniqueValuesForArrayParams($responses, $data);
+        $params = $this->buildParamsArray($unique_values);
+
+        $this->generateDocumentation($params);
+
+        return 0;
+    }
+
+    public function promptForDataTypes($headers)
+    {
         $responses = [];
 
         foreach ($headers as $key => $value) {
-            $responses[$value] = $this->ask('What data type is this parameter? (leave blank to input a string)', $value);
+            // $responses[$value] = $this->ask('What data type is this parameter? (leave blank to input a string or `n` to leave that field out of the documentation)', $value);
 
-            if ($responses[$value] == $value) {
+            $responses[$value] = $this->choice('What data type is this parameter ('.$value.')? '.PHP_EOL.' a: array '.PHP_EOL.' i: integer '.PHP_EOL.' s: string '.PHP_EOL.' n: leave field off docs', ['a', 'i', 's', 'n']);
+
+            if ($responses[$value] == 'a') {
+                $responses[$value] = 'array';
+            }
+
+            if ($responses[$value] == 'i') {
+                $responses[$value] = 'integer';
+            }
+
+
+            if ($responses[$value] == 's') {
                 $responses[$value] = 'string';
             }
 
+
             if ($responses[$value] == 'array') {
-                $should_explode = $this->ask('Do the values from the CSV for this field need to be exploded into separate values?', 'y or n');
+                $should_explode = $this->ask('Is this a comma separated list that needs to be exploded into individual options?', 'y or n');
 
                 if ($should_explode == 'y') {
                     $responses[$value] = 'exploded-array';
@@ -63,12 +87,7 @@ class GenerateDocumentation extends Command
             }
         }
 
-        $unique_values = $this->getUniqueValuesForArrayParams($responses, $data);
-        $params = $this->buildParamsArray($unique_values);
-
-        $this->generateDocumentation($params);
-
-        return 0;
+        return $responses;
     }
 
     public function getCsvData()
@@ -113,8 +132,10 @@ class GenerateDocumentation extends Command
                 $unique_values[$key] = collect($unique_array)->unique();
             } elseif ($response == 'array') {
                 $unique_values[$key] = collect($data)->pluck($key)->unique();
-            } elseif ($response == 'string') {
+            } elseif ($response == 'string' || $response == 'integer') {
                 $unique_values[$key] = $response;
+            } elseif ($response == 'n') {
+                continue;
             }
         }
 
@@ -149,7 +170,7 @@ class GenerateDocumentation extends Command
                 'in' => 'query',
                 'description' => '',
                 'schema' => [
-                    'type' => 'string',
+                    'type' => $value,
                 ],
             ]);
             }
@@ -177,7 +198,7 @@ class GenerateDocumentation extends Command
                     'get' => [
                         'tags' =>
                             [$this->argument('api_name')],
-                        'summary' => 'test',
+                        'summary' => '',
                         'parameters' => $params,
                         'responses' => [
                             200 => [
@@ -191,6 +212,6 @@ class GenerateDocumentation extends Command
 
         $yaml = Yaml::dump($documentation, 50, 2);
 
-        file_put_contents('./public/docs/test2.yaml', $yaml);
+        file_put_contents('./public/docs/'. $this->argument('api_name') . '-test.yaml', $yaml);
     }
 }
