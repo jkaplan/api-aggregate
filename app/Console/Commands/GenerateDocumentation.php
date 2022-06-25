@@ -97,7 +97,13 @@ class GenerateDocumentation extends Command
 
     public function getCsvData()
     {
-        $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name'));
+        $domain = 'https://apiaggregate.co/';
+
+        if (env('APP_ENV') == 'local') {
+            $domain = 'http://api-aggregate.localhost';
+        }
+
+        $response = HTTP::get($domain . '/api/' . $this->argument('api_name'));
         $json = $response->json();
 
         if (!isset($json['last_page'])) {
@@ -111,7 +117,8 @@ class GenerateDocumentation extends Command
         $data = [];
 
         while ($index <= $last_page) {
-            $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name') . '?page=' . $index);
+            $response = HTTP::get($domain . '/api/' . $this->argument('api_name') . '?page=' . $index);
+
             $json = $response->json();
 
             if (isset($json) && isset($json['data'])) {
