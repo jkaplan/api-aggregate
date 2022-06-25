@@ -1228,6 +1228,7 @@ class ConvertCsvToApi
             return $list;
         }
 
+
         $operator = strtoupper($operator);
         $count = count($args);
         $filtered = array();
@@ -1238,29 +1239,49 @@ class ConvertCsvToApi
             $to_match = (array) $obj;
 
             $matched = 0;
-
+            $split_index = 0;
             foreach ($args as $m_key => $m_value) {
-                if (!str_contains($strict_fields, $m_key)) {
-                    if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
-                        $matched++;
+                if (str_contains($m_value, '|')) {
+                    if ($split_index > 0) {
+                        $count++;
                     }
-                }
+                    $split_array = explode('|', $m_value);
 
-                if (str_contains($strict_fields, $m_key)) {
-                    if (array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) {
-                        $matched++;
+                    foreach ($split_array as $split_key => $split_value) {
+                        $split_key = $m_key;
+                        if (!str_contains($strict_fields, $split_key)) {
+                            if ((array_key_exists($split_key, $to_match) && $split_value == $to_match[ $split_key ]) || (array_key_exists($split_key, $to_match) && str_contains($to_match[ $split_key ], $split_value))) {
+                                $matched++;
+                            }
+                        }
+
+                        if (str_contains($strict_fields, $split_key)) {
+                            if (array_key_exists($split_key, $to_match) && $split_value == $to_match[ $split_key ]) {
+                                $matched++;
+                            }
+                        }
+                    }
+                    $split_index++;
+                } else {
+                    if (!str_contains($strict_fields, $m_key)) {
+                        if ((array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) || (array_key_exists($m_key, $to_match) && str_contains($to_match[ $m_key ], $m_value))) {
+                            $matched++;
+                        }
+                    }
+
+                    if (str_contains($strict_fields, $m_key)) {
+                        if (array_key_exists($m_key, $to_match) && $m_value == $to_match[ $m_key ]) {
+                            $matched++;
+                        }
                     }
                 }
             }
 
-
-
-            if (('AND' == $operator && $matched == $count)
-                || ('OR' == $operator && $matched > 0)
-                || ('NOT' == $operator && 0 == $matched)) {
+            if (('AND' == $operator && $matched == $count) || ('OR' == $operator && $matched > 0) || ('NOT' == $operator && 0 == $matched)) {
                 $filtered[$key] = $obj;
             }
         }
+
 
         return $filtered;
     }
