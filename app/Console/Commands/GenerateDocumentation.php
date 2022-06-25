@@ -98,11 +98,28 @@ class GenerateDocumentation extends Command
     public function getCsvData()
     {
         $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name'));
-        // $last_page = $json['last_page'];
-        // TODO: while loop with last page to get all the data
         $json = $response->json();
-        $data = $json['data'];
 
+        if (!isset($json['last_page'])) {
+            $this->error('Could not retrieve CSV data to generate documentation.');
+            return;
+        }
+
+        $last_page = $json['last_page'];
+
+        $index = 1;
+        $data = [];
+
+        while ($index <= $last_page) {
+            $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name') . '?page=' . $index);
+            $json = $response->json();
+
+            if (isset($json) && isset($json['data'])) {
+                $data = array_merge($data, $json['data']);
+            }
+
+            $index += 1;
+        }
 
         return $data;
     }
