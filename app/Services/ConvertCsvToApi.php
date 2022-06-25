@@ -51,7 +51,12 @@ class ConvertCsvToApi
         }
 
         // Define a series of configuration variables based on what was requested in the query.
-        $this->source = 'http://api-aggregate.localhost/csvs/' . $csv_name . '.csv';
+        $this->source = 'https://apiaggregate.com/csvs/' . $csv_name . '.csv';
+
+        if (env('APP_ENV') == 'local') {
+            $this->source = 'http://api-aggregate.localhost/csvs/' . $csv_name . '.csv';
+        }
+
         $this->source_format = isset($query['source_format']) ? $query['source_format'] : $this->get_extension($this->source);
         $this->format = isset($query['format']) ? $query['format'] : 'json';
         $this->sort = isset($query['sort']) ? $query['sort'] : null;
@@ -67,8 +72,7 @@ class ConvertCsvToApi
      */
     public function parse()
     {
-
-    // Create an instance of the parser for the requested file format (e.g. CSV)
+        // Create an instance of the parser for the requested file format (e.g. CSV)
         $parser = 'parse_' . $this->source_format;
 
         if (!method_exists($this, $parser)) {
