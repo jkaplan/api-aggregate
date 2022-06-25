@@ -33,7 +33,6 @@ class GenerateDocumentation extends Command
         parent::__construct();
     }
 
-
     /**
      * Execute the console command.
      *
@@ -43,17 +42,47 @@ class GenerateDocumentation extends Command
     {
         $data = $this->getCsvData();
         $headers = $this->getCsvHeaders($data);
+
+        $responses = $this->promptForDataTypes($headers);
+        $strict_params = $this->promptForStrictParams($headers);
+
+        $unique_values = $this->getUniqueValuesForArrayParams($responses, $data);
+        $params = $this->buildParamsArray($unique_values, $strict_params);
+
+        $this->generateDocumentation($params);
+
+        return 0;
+    }
+
+    public function promptForStrictParams($headers)
+    {
+        $strict_fields = $this->choice('Which params should allow strict filtering? '. PHP_EOL .' For example, querying `TV` with a strict filter would not return records with a value of `TV Shows`.', $headers, null, null, true);
+
+        return $strict_fields;
+    }
+
+    public function promptForDataTypes($headers)
+    {
         $responses = [];
 
         foreach ($headers as $key => $value) {
-            $responses[$value] = $this->ask('What data type is this parameter? (leave blank to input a string)', $value);
+            $responses[$value] = $this->choice('What data type is this parameter ('.$value.')? '.PHP_EOL.' a: array '.PHP_EOL.' i: integer '.PHP_EOL.' s: string '.PHP_EOL.' n: leave field off docs', ['a', 'i', 's', 'n']);
 
-            if ($responses[$value] == $value) {
+            if ($responses[$value] == 'a') {
+                $responses[$value] = 'array';
+            }
+
+            if ($responses[$value] == 'i') {
+                $responses[$value] = 'integer';
+            }
+
+
+            if ($responses[$value] == 's') {
                 $responses[$value] = 'string';
             }
 
             if ($responses[$value] == 'array') {
-                $should_explode = $this->ask('Do the values from the CSV for this field need to be exploded into separate values?', 'y or n');
+                $should_explode = $this->ask('Is this a comma separated list that needs to be exploded into individual options?', 'y or n');
 
                 if ($should_explode == 'y') {
                     $responses[$value] = 'exploded-array';
@@ -63,34 +92,49 @@ class GenerateDocumentation extends Command
             }
         }
 
-        $unique_values = $this->getUniqueValuesForArrayParams($responses, $data);
-        $params = $this->buildParamsArray($unique_values);
-
-        $this->generateDocumentation($params);
-
-        return 0;
+        return $responses;
     }
 
     public function getCsvData()
     {
         $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name'));
-        // $last_page = $json['last_page'];
-        // TODO: while loop with last page to get all the data
         $json = $response->json();
-        $data = $json['data'];
 
+        if (!isset($json['last_page'])) {
+            $this->error('Could not retrieve CSV data to generate documentation.');
+            return;
+        }
+
+        $last_page = $json['last_page'];
+
+        $index = 1;
+        $data = [];
+
+        while ($index <= $last_page) {
+            $response = HTTP::get('http://api-aggregate.localhost/api/' . $this->argument('api_name') . '?page=' . $index);
+            $json = $response->json();
+
+            if (isset($json) && isset($json['data'])) {
+                $data = array_merge($data, $json['data']);
+            }
+
+            $index += 1;
+        }
 
         return $data;
     }
 
     public function getCsvHeaders($data)
     {
-        $first_row = $data[0];
         $headers = [];
 
-        foreach ($first_row as $key => $value) {
-            array_push($headers, $key);
+        foreach ($data as $key => $value) {
+            foreach ($value as $k => $v) {
+                array_push($headers, $k);
+            }
         }
+
+        $headers = collect($headers)->unique()->toArray();
 
         return $headers;
     }
@@ -113,21 +157,26 @@ class GenerateDocumentation extends Command
                 $unique_values[$key] = collect($unique_array)->unique();
             } elseif ($response == 'array') {
                 $unique_values[$key] = collect($data)->pluck($key)->unique();
-            } elseif ($response == 'string') {
+            } elseif ($response == 'string' || $response == 'integer') {
                 $unique_values[$key] = $response;
+            } elseif ($response == 'n') {
+                continue;
             }
         }
 
         return $unique_values;
     }
 
-    public function buildParamsArray($unique_values)
+    public function buildParamsArray($unique_values, $strict_fields)
     {
         $params = [];
+        $unique_values = array_merge($unique_values, ['strict_fields' => $strict_fields]);
 
         foreach ($unique_values as $key => $value) {
-            if (is_object($value)) {
-                $value = array_values($value->toArray());
+            if (is_object($value) || is_array($value)) {
+                if (is_object($value)) {
+                    $value = array_values($value->toArray());
+                }
 
                 array_push($params, [
                     'name' => $key,
@@ -149,7 +198,7 @@ class GenerateDocumentation extends Command
                 'in' => 'query',
                 'description' => '',
                 'schema' => [
-                    'type' => 'string',
+                    'type' => $value,
                 ],
             ]);
             }
@@ -177,7 +226,7 @@ class GenerateDocumentation extends Command
                     'get' => [
                         'tags' =>
                             [$this->argument('api_name')],
-                        'summary' => 'test',
+                        'summary' => '',
                         'parameters' => $params,
                         'responses' => [
                             200 => [
@@ -191,6 +240,6 @@ class GenerateDocumentation extends Command
 
         $yaml = Yaml::dump($documentation, 50, 2);
 
-        file_put_contents('./public/docs/test2.yaml', $yaml);
+        file_put_contents('./public/docs/'. $this->argument('api_name') . '-test.yaml', $yaml);
     }
 }
