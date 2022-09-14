@@ -185,6 +185,7 @@ return [
         /*
          * Package Service Providers...
          */
+        TimoKoerber\LaravelJsonSeeder\JsonSeederServiceProvider::class,
 
         /*
          * Application Service Providers...

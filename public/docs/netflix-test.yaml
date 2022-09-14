@@ -1,0 +1,186 @@
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'https://apiaggregate.com/api'
+paths:
+  /netflix:
+    get:
+      tags:
+        - netflix
+      summary: ''
+      parameters:
+        -
+          name: show_id
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: type
+          in: query
+          description: ''
+          style: pipeDelimited
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Movie
+                - 'TV Show'
+        -
+          name: title
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: director
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: country
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: date_added
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: release_year
+          in: query
+          description: ''
+          schema:
+            type: integer
+        -
+          name: rating
+          in: query
+          description: ''
+          style: pipeDelimited
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - PG-13
+                - TV-MA
+                - PG
+                - TV-14
+                - TV-PG
+                - TV-Y
+                - TV-Y7
+                - R
+                - TV-G
+                - G
+                - NR
+                - NC-17
+                - TV-Y7-FV
+                - null
+        -
+          name: duration
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: listed_in
+          in: query
+          description: ''
+          style: pipeDelimited
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Documentaries
+                - 'International TV Shows'
+                - 'TV Dramas'
+                - 'TV Mysteries'
+                - 'Crime TV Shows'
+                - 'TV Action & Adventure'
+                - Docuseries
+                - 'Reality TV'
+                - 'Romantic TV Shows'
+                - 'TV Comedies'
+                - 'TV Horror'
+                - 'Children & Family Movies'
+                - Dramas
+                - 'Independent Movies'
+                - 'International Movies'
+                - 'British TV Shows'
+                - Comedies
+                - 'Spanish-Language TV Shows'
+                - Thrillers
+                - 'Romantic Movies'
+                - 'Music & Musicals'
+                - 'Horror Movies'
+                - 'Sci-Fi & Fantasy'
+                - 'TV Thrillers'
+                - "Kids' TV"
+                - 'Action & Adventure'
+                - 'TV Sci-Fi & Fantasy'
+                - 'Classic Movies'
+                - 'Anime Features'
+                - 'Sports Movies'
+                - 'Anime Series'
+                - 'Korean TV Shows'
+                - 'Science & Nature TV'
+                - 'Teen TV Shows'
+                - 'Cult Movies'
+                - 'TV Shows'
+                - 'Faith & Spirituality'
+                - 'LGBTQ Movies'
+                - 'Stand-Up Comedy'
+                - Movies
+                - 'Stand-Up Comedy & Talk Shows'
+                - 'Classic & Cult TV'
+        -
+          name: description
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: cast
+          in: query
+          description: ''
+          schema:
+            type: string
+        -
+          name: strict_fields
+          in: query
+          description: ''
+          style: pipeDelimited
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - show_id
+                - type
+                - title
+                - director
+                - country
+                - date_added
+                - release_year
+                - rating
+                - duration
+                - listed_in
+                - description
+                - cast
+      responses:
+        200:
+          description: Success

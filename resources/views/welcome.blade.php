@@ -128,5 +128,19 @@
                 </div>
             </div>
         </div>
+        <script>
+        var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+        };
+
+        fetch("http://api-aggregate.localhost/api/cryptwerk_doge", requestOptions)
+        .then(response => response.text())
+        .then(result => {
+            const json = JSON.parse(result);
+            console.log(json)
+        })
+        .catch(error => console.log('error', error));
+        </script>
     </body>
 </html>
